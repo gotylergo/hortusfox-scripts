@@ -73,7 +73,7 @@ Go to Settings > Custom code for head section in the HortusFox UI.
 Add the script reference using your server's IP and the mapped port:
 
 ```html
-<script src="http://YOUR_SERVER_IP:8081/hortusfox-logger.js"></script>
+<script src="http://YOUR_SERVER_IP:8081/"></script>
 ```
 *(Ensure you map ports on the `scripts` container or proxy it to an accessible URL if loading via browser).*
 
