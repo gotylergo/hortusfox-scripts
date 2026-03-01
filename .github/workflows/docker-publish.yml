@@ -17,63 +17,6 @@ env:
   SCRIPTS_IMAGE_NAME: ${{ github.repository_owner }}/hortusfox-scripts
 
 jobs:
-  build-upstream-image:
-    name: Build Upstream HortusFox Core
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout upstream repository
-        uses: actions/checkout@v4
-        with:
-          repository: danielbrendel/hortusfox-web
-          ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Build production assets
-        run: |
-          npm install
-          npm run build --if-present
-          npm run prod --if-present
-          npm run production --if-present
-
-      # Patch Apache/htaccess for CORS
-      # Injects standard headers to prevent cross-origin blocking
-      - name: Relax CORS headers
-        run: |
-          if [ -f public/.htaccess ]; then
-            echo -e "\n<IfModule mod_headers.c>\n    Header set Access-Control-Allow-Origin \"*\"\n</IfModule>" >> public/.htaccess
-          fi
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Core Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY }}/${{ env.CORE_IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   build-scripts-image:
     name: Build Scripts Sidecar Image
     runs-on: ubuntu-latest

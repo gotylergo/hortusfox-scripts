@@ -11,71 +11,53 @@ A custom sidecar container to add enhanced features to [HortusFox](https://githu
 
 ### 1. Add to Docker Compose
 
-Update your HortusFox `docker-compose.yml` stack to use the new custom core image, and add the sidecar service:
+Update your HortusFox `docker-compose.yml` stack to add the sidecar service:
 
 ```yaml
 services:
   app:
-    # Use the custom rebuilt core image to inherit CORS patches
-    image: ghcr.io/YOUR_USERNAME/hortusfox-core:latest
+    image: ghcr.io/danielbrendel/hortusfox-web:latest
     container_name: hortusfox
     restart: unless-stopped
     depends_on:
       - db
-    environment:
-      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL}
-      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
-      APP_TIMEZONE: "America/Los_Angeles"
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: hortusfox
-      DB_USERNAME: hortusfox
-      DB_PASSWORD: ${MYSQL_PASSWORD}
-      DB_CHARSET: "utf8mb4"
-    volumes:
-      - app_images:/var/www/html/public/img
-      - app_logs:/var/www/html/app/logs
-      - app_backup:/var/www/html/public/backup
-      - app_themes:/var/www/html/public/themes
-      - app_migrate:/var/www/html/app/migrations
-    networks:
-      - default
-      - proxy
-
-  db:
-    image: mariadb:latest
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: hortusfox
-      MYSQL_USER: hortusfox
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - default
+    # ... your standard HortusFox environment variables & volumes
 
   scripts:
     # Use the sidecar scripts container
     image: ghcr.io/YOUR_USERNAME/hortusfox-scripts:main
     container_name: hortusfox-scripts
     restart: unless-stopped
-    ports:
-      - "8081:80"
     networks:
-      - default
+      - default # Ensure it shares the same network as 'app'
 ```
 
-### 2. Configure HortusFox
+### 2. Configure Your Reverse Proxy (Recommended for CORS)
+
+Loading the script via a different URL (like an IP address or `http://...:8081/`) may trigger your browser's CORS (Cross-Origin Resource Sharing) protections, preventing the scripts from loading securely.
+
+The **best practice** is to place a Reverse Proxy (such as Nginx Proxy Manager, Caddy, or Traefik) in front of your stack to serve both containers from the **same domain**.
+
+1. Route your main domain (`https://plants.example.com/`) to the HortusFox `app` container.
+2. Create a custom location/path route (`https://plants.example.com/scripts/`) that points to port `80` on the `scripts` container.
+
+Because the browser loads everything from the exact same domain, the Javascript is considered **Same-Origin** and executes flawlessly. 
+
+### 3. Configure HortusFox
 
 Go to Settings > Custom code for head section in the HortusFox UI.
 
-Add the script reference using your server's IP and the mapped port:
+If you used the Reverse Proxy method above, simply provide the path you routed:
+
+```html
+<script src="/scripts/"></script>
+```
+
+Otherwise, if you exposed port `8081` directly instead of a proxy, link your server's mapped IP:
 
 ```html
 <script src="http://YOUR_SERVER_IP:8081/"></script>
 ```
-*(Ensure you map ports on the `scripts` container or proxy it to an accessible URL if loading via browser).*
 
 ---
 
