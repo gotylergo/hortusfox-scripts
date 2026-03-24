@@ -19,7 +19,7 @@ env:
 jobs:
   build-scripts-image:
     name: Build Scripts Sidecar Image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     permissions:
       contents: read
       packages: write
