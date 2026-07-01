@@ -6,20 +6,16 @@ on:
       - main
     tags:
       - "v*"
-  schedule:
-    # Runs everyday at 10:00 UTC (2:00 AM PST)
-    - cron: '0 10 * * *'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  CORE_IMAGE_NAME: ${{ github.repository_owner }}/hortusfox-core
   SCRIPTS_IMAGE_NAME: ${{ github.repository_owner }}/hortusfox-scripts
 
 jobs:
   build-scripts-image:
     name: Build Scripts Sidecar Image
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
